@@ -10,7 +10,7 @@ const cameras = [
     recordLabel: "CAM-01 • REC",
   },
   {
-    name: "Gate B",
+    name: "Exit B",
     code: "CAM-02",
     status: "live" as const,
     recordLabel: "CAM-02 • LIVE",

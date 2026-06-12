@@ -133,11 +133,6 @@ export default function AlertPanel() {
                 ) : null}
               </div>
 
-              {alert.tone === "primary" ? (
-                <button className="mt-3 flex w-full items-center justify-center rounded-full border border-primary/50 px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary-container/20">
-                  Send to medic
-                </button>
-              ) : null}
             </article>
           ))}
         </div>
