@@ -46,47 +46,42 @@ export default function CameraStreamPage() {
     statusRef.current = status;
   }, [status]);
 
+  async function startCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false,
+      });
+
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = stream;
+
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = stream;
+        await video.play().catch(() => undefined);
+      }
+
+      setErrorMessage(null);
+      setCameraReady(true);
+      setStatus("scanning");
+    } catch (err) {
+      console.error("Camera error:", err);
+      setStatus("error");
+      setErrorMessage(
+        err instanceof Error ? `${err.name}: ${err.message}` : "Unknown camera error",
+      );
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
-
-    async function startCamera() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
-          audio: false,
-        });
-
-        if (cancelled) {
-          stream.getTracks().forEach((track) => track.stop());
-          return;
-        }
-
-        streamRef.current?.getTracks().forEach((track) => track.stop());
-        streamRef.current = stream;
-
-        const video = videoRef.current;
-        if (video) {
-          video.srcObject = stream;
-          await video.play().catch(() => undefined);
-        }
-
-        setErrorMessage(null);
-        setCameraReady(true);
-      } catch (err) {
-        console.error("Camera error:", err);
-        setStatus("error");
-        setErrorMessage(
-          err instanceof Error ? `${err.name}: ${err.message}` : "Unknown camera error",
-        );
-      }
-    }
 
     void (async () => {
       await loadFaceDetectionModels();
       if (!cancelled) {
         setModelsReady(true);
       }
-      await startCamera();
     })();
 
     return () => {
@@ -216,6 +211,18 @@ export default function CameraStreamPage() {
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(89,219,199,0.12),transparent_35%),linear-gradient(to_bottom,rgba(5,11,12,0.08),rgba(5,11,12,0.58))]" />
 
+      {!cameraReady && !errorMessage ? (
+        <div className="absolute inset-0 z-30 flex items-center justify-center">
+          <button
+            onClick={startCamera}
+            type="button"
+            className="rounded-full bg-[#59dbc7] px-8 py-4 text-lg font-bold text-black"
+          >
+            Start Camera
+          </button>
+        </div>
+      ) : null}
+
       <div className="absolute left-0 right-0 top-0 z-20 flex flex-col gap-3 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
         {errorMessage && (
           <div
@@ -258,14 +265,6 @@ export default function CameraStreamPage() {
           </span>
         </div>
       </div>
-
-      {!cameraReady && status !== "error" ? (
-        <div className="absolute inset-0 z-10 flex items-end p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-          <div className="max-w-[18rem] rounded-full border border-white/10 bg-black/35 px-3 py-2 font-label-mono text-[11px] uppercase tracking-[0.08em] text-on-surface-variant backdrop-blur-md">
-            Initializing camera...
-          </div>
-        </div>
-      ) : null}
 
       {errorMessage ? (
         <div className="absolute inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
