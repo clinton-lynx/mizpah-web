@@ -129,13 +129,13 @@ export default function CameraStreamPage() {
           return;
         }
 
-        const faceBlob = await cropFaceFromVideo(video, detection);
-        if (!faceBlob) {
+        const base64Face = cropFaceFromVideo(video, detection);
+        if (!base64Face) {
           setStatus("scanning");
           return;
         }
 
-        const response = await scanFace(faceBlob, "passive");
+        const response = await scanFace(base64Face, "passive");
 
         if (cancelled) {
           return;

@@ -31,36 +31,40 @@ export async function detectFace(video: HTMLVideoElement) {
   );
 }
 
-export async function cropFaceFromVideo(
-  video: HTMLVideoElement,
+export function cropFaceFromVideo(
+  videoElement: HTMLVideoElement,
   detection: Awaited<ReturnType<typeof detectFace>>,
-) {
+): string | null {
   if (!detection) {
     return null;
   }
 
   const { x, y, width, height } = detection.box;
-  const padding = Math.max(width, height) * 0.2;
-
-  const sourceLeft = Math.max(0, Math.floor(x - padding));
-  const sourceTop = Math.max(0, Math.floor(y - padding));
-  const sourceRight = Math.min(video.videoWidth, Math.ceil(x + width + padding));
-  const sourceBottom = Math.min(video.videoHeight, Math.ceil(y + height + padding));
-  const sourceWidth = Math.max(1, sourceRight - sourceLeft);
-  const sourceHeight = Math.max(1, sourceBottom - sourceTop);
-
   const canvas = document.createElement("canvas");
-  canvas.width = sourceWidth;
-  canvas.height = sourceHeight;
+
+  // Resize down to keep the encoded payload comfortably below the API limit.
+  const maxWidth = 400;
+  const scale = Math.min(1, maxWidth / width);
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
 
   const context = canvas.getContext("2d");
   if (!context) {
     return null;
   }
 
-  context.drawImage(video, sourceLeft, sourceTop, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+  context.drawImage(
+    videoElement,
+    x,
+    y,
+    width,
+    height,
+    0,
+    0,
+    canvas.width,
+    canvas.height,
+  );
 
-  return new Promise<Blob | null>((resolve) => {
-    canvas.toBlob((blob) => resolve(blob), "image/jpeg", 0.92);
-  });
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.6);
+  return dataUrl.split(",")[1] || null;
 }
