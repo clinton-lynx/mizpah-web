@@ -136,6 +136,9 @@ export default function CameraStreamPage() {
         }
 
         const response = await scanFace(base64Face, "passive");
+        setDebugInfo(
+          `${new Date().toLocaleTimeString()} | Sent ${base64Face.length} chars | Response: ${JSON.stringify(response)}`,
+        );
 
         if (cancelled) {
           return;
@@ -157,7 +160,10 @@ export default function CameraStreamPage() {
         }
 
         setStatus("scanning");
-      } catch {
+      } catch (err) {
+        setDebugInfo(
+          `ERROR: ${err instanceof Error ? err.message : "Unknown error"}`,
+        );
         if (!cancelled) {
           setStatus("scanning");
         }
