@@ -41,6 +41,7 @@ export default function CameraStreamPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [modelsReady, setModelsReady] = useState(false);
+  const [debugInfo, setDebugInfo] = useState("Not started");
 
   useEffect(() => {
     statusRef.current = status;
@@ -113,6 +114,11 @@ export default function CameraStreamPage() {
 
       try {
         const detection = await detectFace(video);
+        setDebugInfo(
+          `${new Date().toLocaleTimeString()} | Video: ${video.videoWidth}x${video.videoHeight} | Detection: ${
+            detection ? "FOUND face" : "no face"
+          }`,
+        );
 
         if (cancelled) {
           return;
@@ -277,6 +283,10 @@ export default function CameraStreamPage() {
           </button>
         </div>
       ) : null}
+
+      <div className="absolute bottom-0 left-0 right-0 z-30 bg-black/80 p-2 text-center font-mono text-[10px] text-white">
+        {debugInfo}
+      </div>
     </main>
   );
 }
