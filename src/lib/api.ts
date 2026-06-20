@@ -64,12 +64,18 @@ export async function enrollProfile(data: {
 
 export async function getProfiles() {
   const response = await fetch(`${BASE_URL}/profiles`);
+  const rawText = await response.text();
+  console.log(`[api.getProfiles] raw response status=${response.status} ok=${response.ok} body=${rawText}`);
+
   if (!response.ok) throw new Error("Failed to fetch profiles");
-  const data = await response.json();
+
+  const data = JSON.parse(rawText);
+  console.log(`[api.getProfiles] parsed payload=${JSON.stringify(data)}`);
   return data.profiles;
 }
 
 export async function getProfileById(id: string) {
   const profiles = await getProfiles();
+  console.log(`[api.getProfileById] matching profile id=${id} profiles=${JSON.stringify(profiles)}`);
   return profiles.find((p: any) => p.id === id) || null;
 }

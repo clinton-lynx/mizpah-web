@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 
 import OperationalShell from "@/components/shared/OperationalShell";
 import MaterialIcon from "@/components/shared/MaterialIcon";
-import { getProfileById } from "@/lib/api";
+import { getProfileById, getProfiles } from "@/lib/api";
 
 type ProfileRecord = {
   id?: string | number;
@@ -96,7 +96,8 @@ function getFields(profile: ProfileRecord): DetailField[] {
   ];
 }
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -109,7 +110,15 @@ export default function Page({ params }: { params: { id: string } }) {
       setErrorMessage(null);
 
       try {
-        const data = (await getProfileById(params.id)) as ProfileRecord | null;
+        const [data, profiles] = await Promise.all([
+          getProfileById(id),
+          getProfiles(),
+        ]);
+
+        console.log(
+          `[watchlists/[id]] lookup comparison id=${id} profiles=${JSON.stringify(profiles)} resolvedProfile=${JSON.stringify(data)}`,
+        );
+
         if (!cancelled) {
           setProfile(data);
         }
@@ -130,7 +139,7 @@ export default function Page({ params }: { params: { id: string } }) {
     return () => {
       cancelled = true;
     };
-  }, [params.id]);
+  }, [id]);
 
   const fields = useMemo(() => (profile ? getFields(profile) : []), [profile]);
 
