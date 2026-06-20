@@ -4,6 +4,11 @@ import { useEffect, useRef, useState } from "react";
 
 import { cropFaceFromVideo, detectFace, loadFaceDetectionModels } from "@/lib/faceDetection";
 import { scanFace } from "@/lib/api";
+import type {
+  LiveAlertReport,
+  LiveMatchPayload,
+  LiveAlertType,
+} from "@/components/live-monitor/types";
 
 type ScanStatus = "scanning" | "checking" | "matched" | "error";
 
@@ -13,8 +18,11 @@ type ScanResponse = {
   confidence?: number | string;
   profile?: {
     name?: string;
+    type?: LiveAlertType | string;
   } | null;
   name?: string;
+  type?: LiveAlertType | string;
+  reports?: LiveAlertReport[];
 };
 
 const statusConfig: Record<ScanStatus, { label: string; tone: string; dot: string }> = {
@@ -68,6 +76,7 @@ export interface LiveCameraCardProps {
   code: string;
   recordLabel?: string;
   className?: string;
+  onMatch?: (match: LiveMatchPayload) => void;
 }
 
 export default function LiveCameraCard({
@@ -75,6 +84,7 @@ export default function LiveCameraCard({
   code,
   recordLabel = `${code} • LIVE`,
   className = "",
+  onMatch,
 }: LiveCameraCardProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -86,6 +96,22 @@ export default function LiveCameraCard({
   const [modelsReady, setModelsReady] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [matchSummary, setMatchSummary] = useState<string | null>(null);
+
+  function createAlertId() {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  function normalizeAlertType(value: unknown): LiveAlertType {
+    if (value === "medical" || value === "missing" || value === "watchlist") {
+      return value;
+    }
+
+    return "watchlist";
+  }
 
   useEffect(() => {
     statusRef.current = status;
@@ -160,6 +186,14 @@ export default function LiveCameraCard({
         }
 
         if (response.matched ?? response.matchFound) {
+          onMatch?.({
+            profileName: response.profile?.name ?? response.name ?? name,
+            profileType: normalizeAlertType(response.profile?.type ?? response.type),
+            reports: response.reports ?? [],
+            location: name,
+            confidence: response.confidence ?? null,
+            timestamp: new Date().toISOString(),
+          });
           setStatus("matched");
           setMatchSummary(resolveMatchSummary(response));
           setErrorMessage(null);

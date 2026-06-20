@@ -1,3 +1,5 @@
+"use client";
+
 type CameraStatus = "live" | "match";
 
 export interface CameraCardProps {

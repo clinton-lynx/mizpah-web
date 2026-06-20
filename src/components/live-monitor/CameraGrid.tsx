@@ -1,5 +1,8 @@
+"use client";
+
 import LiveCameraCard from "@/components/live-monitor/LiveCameraCard";
 import CameraCard from "@/components/live-monitor/CameraCard";
+import type { LiveAlert } from "@/components/live-monitor/types";
 
 const cameras = [
   {
@@ -22,13 +25,18 @@ const cameras = [
   },
 ];
 
-export default function CameraGrid() {
+export default function CameraGrid({
+  onMatch,
+}: {
+  onMatch: (alert: LiveAlert) => void;
+}) {
   return (
     <section className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-2" id="active-feeds">
       <LiveCameraCard
         name="Gate A"
         code="CAM-01"
         recordLabel="CAM-01 • LIVE"
+        onMatch={onMatch}
       />
       {cameras.map((camera) => (
         <CameraCard key={camera.code} {...camera} />
