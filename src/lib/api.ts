@@ -61,3 +61,10 @@ export async function enrollProfile(data: {
 
   return response.json();
 }
+
+export async function getProfiles() {
+  const response = await fetch(`${BASE_URL}/profiles`);
+  if (!response.ok) throw new Error("Failed to fetch profiles");
+  const data = await response.json();
+  return data.profiles;
+}
