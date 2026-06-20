@@ -87,6 +87,7 @@ export default function LiveCameraCard({
   onMatch,
 }: LiveCameraCardProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const scanInFlightRef = useRef(false);
   const matchedTimeoutRef = useRef<number | null>(null);
@@ -111,6 +112,64 @@ export default function LiveCameraCard({
     }
 
     return "watchlist";
+  }
+
+  function clearFaceOverlay() {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
+    context.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function drawFaceOverlay(video: HTMLVideoElement, detection: Awaited<ReturnType<typeof detectFace>>) {
+    const canvas = canvasRef.current;
+    if (!canvas || !detection) {
+      clearFaceOverlay();
+      return;
+    }
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
+    const displayWidth = video.clientWidth || video.videoWidth;
+    const displayHeight = video.clientHeight || video.videoHeight;
+    if (!displayWidth || !displayHeight || !video.videoWidth || !video.videoHeight) {
+      clearFaceOverlay();
+      return;
+    }
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(displayWidth * dpr);
+    canvas.height = Math.round(displayHeight * dpr);
+    canvas.style.width = `${displayWidth}px`;
+    canvas.style.height = `${displayHeight}px`;
+
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    context.clearRect(0, 0, displayWidth, displayHeight);
+
+    const scaleX = displayWidth / video.videoWidth;
+    const scaleY = displayHeight / video.videoHeight;
+    const { x, y, width, height } = detection.box;
+    const strokeWidth = 3;
+    const inset = strokeWidth / 2;
+
+    context.strokeStyle = "#59dbc7";
+    context.lineWidth = strokeWidth;
+    context.strokeRect(
+      x * scaleX + inset,
+      y * scaleY + inset,
+      width * scaleX - strokeWidth,
+      height * scaleY - strokeWidth,
+    );
   }
 
   useEffect(() => {
@@ -163,12 +222,14 @@ export default function LiveCameraCard({
 
       try {
         const detection = await detectFace(video);
+        drawFaceOverlay(video, detection);
 
         if (cancelled) {
           return;
         }
 
         if (!detection) {
+          clearFaceOverlay();
           setStatus("scanning");
           return;
         }
@@ -214,6 +275,7 @@ export default function LiveCameraCard({
         setStatus("scanning");
         setMatchSummary(null);
       } catch (err) {
+        clearFaceOverlay();
         if (!cancelled) {
           setStatus("error");
           setErrorMessage(err instanceof Error ? err.message : "Unknown scan error");
@@ -258,6 +320,8 @@ export default function LiveCameraCard({
         await video.play().catch(() => undefined);
       }
 
+      clearFaceOverlay();
+
       setErrorMessage(null);
       setStatus("scanning");
       setCameraReady(true);
@@ -287,6 +351,7 @@ export default function LiveCameraCard({
         playsInline
         className="absolute inset-0 h-full w-full object-cover"
       />
+      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full pointer-events-none" />
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(57,71,102,0.35),transparent_34%),radial-gradient(circle_at_80%_0%,rgba(89,219,199,0.1),transparent_30%),linear-gradient(180deg,rgba(16,20,21,0.65),rgba(11,15,16,0.95))]" />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:48px_48px] opacity-35" />
