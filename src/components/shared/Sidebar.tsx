@@ -54,17 +54,6 @@ export default function Sidebar({ alertCount = 0 }: SidebarProps) {
             <Video size={24} />
             <span className="font-headline-sm text-headline-sm">Live Monitor</span>
           </Link>
-          <Link href="/events" className={getLinkClasses("/events", true)}>
-            <div className="flex items-center gap-3">
-              <ClipboardList size={24} />
-              <span className="font-headline-sm text-headline-sm">Event Log</span>
-            </div>
-            {alertCount > 0 && (
-              <span className="bg-error text-on-error px-2 py-0.5 rounded-full font-label-mono text-label-mono">
-                {alertCount}
-              </span>
-            )}
-          </Link>
           <Link href="/watchlists" className={getLinkClasses("/watchlists", false)}>
             <Search size={24} />
             <span className="font-headline-sm text-headline-sm">Watchlists</span>
@@ -72,18 +61,6 @@ export default function Sidebar({ alertCount = 0 }: SidebarProps) {
           <Link href="/enroll" className={getLinkClasses("/enroll", false)}>
             <UserPlus size={24} />
             <span className="font-headline-sm text-headline-sm">Enroll</span>
-          </Link>
-        </div>
-        
-        <div className="mb-4">
-          <p className="font-label-mono text-label-mono text-on-surface-variant mb-2 px-3 uppercase mt-6">Management</p>
-          <Link href="/system-health" className={getLinkClasses("/system-health", false)}>
-            <Activity size={24} />
-            <span className="font-headline-sm text-headline-sm">System Health</span>
-          </Link>
-          <Link href="/analytics" className={getLinkClasses("/analytics", false)}>
-            <BarChart2 size={24} />
-            <span className="font-headline-sm text-headline-sm">Analytics</span>
           </Link>
         </div>
       </div>

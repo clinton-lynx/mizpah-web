@@ -45,16 +45,8 @@ const navGroupsByVariant: Record<
         label: "Operations",
         items: [
           { label: "Live Monitor", href: "/dashboard", id: "dashboard", icon: "videocam" },
-          { label: "Event Log", href: "/event-log", id: "event-log", icon: "list_alt", badge: "3" },
           { label: "Watchlists", href: "/watchlists", id: "watchlists", icon: "search" },
           { label: "Enroll", href: "/enroll", id: "enroll", icon: "person_add" },
-        ],
-      },
-      {
-        label: "Management",
-        items: [
-          { label: "System Health", href: "/system-health", id: "system-health", icon: "monitor_heart" },
-          { label: "Analytics", href: "/analytics", id: "analytics", icon: "query_stats" },
         ],
       },
     ],
@@ -70,10 +62,8 @@ const navGroupsByVariant: Record<
         label: "Operational",
         items: [
           { label: "Live Monitor", href: "/dashboard", id: "dashboard", icon: "videocam" },
-          { label: "Event Log", href: "/event-log", id: "event-log", icon: "list_alt" },
           { label: "Watchlists", href: "/watchlists", id: "watchlists", icon: "search" },
-          { label: "System Health", href: "/system-health", id: "system-health", icon: "monitor_heart" },
-          { label: "Analytics", href: "/analytics", id: "analytics", icon: "query_stats" },
+          { label: "Enroll", href: "/enroll", id: "enroll", icon: "person_add" },
         ],
       },
     ],
@@ -89,10 +79,8 @@ const navGroupsByVariant: Record<
         label: "Operational",
         items: [
           { label: "Live Monitor", href: "/dashboard", id: "dashboard", icon: "videocam" },
-          { label: "Event Log", href: "/event-log", id: "event-log", icon: "list_alt" },
           { label: "Watchlists", href: "/watchlists", id: "watchlists", icon: "search" },
-          { label: "System Health", href: "/system-health", id: "system-health", icon: "monitor_heart" },
-          { label: "Analytics", href: "/analytics", id: "analytics", icon: "query_stats" },
+          { label: "Enroll", href: "/enroll", id: "enroll", icon: "person_add" },
         ],
       },
     ],

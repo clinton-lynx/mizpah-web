@@ -4,7 +4,7 @@ import { use, useEffect, useMemo, useState } from "react";
 
 import OperationalShell from "@/components/shared/OperationalShell";
 import MaterialIcon from "@/components/shared/MaterialIcon";
-import { getProfileById, getProfiles } from "@/lib/api";
+import { getProfiles } from "@/lib/api";
 
 type ProfileRecord = {
   id?: string | number;
@@ -110,17 +110,16 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       setErrorMessage(null);
 
       try {
-        const [data, profiles] = await Promise.all([
-          getProfileById(id),
-          getProfiles(),
-        ]);
+        const profiles = await getProfiles();
+        const matchedProfile =
+          profiles.find((profile: ProfileRecord) => String(profile.id) === String(id)) || null;
 
         console.log(
-          `[watchlists/[id]] lookup comparison id=${id} profiles=${JSON.stringify(profiles)} resolvedProfile=${JSON.stringify(data)}`,
+          `[watchlists/[id]] lookup comparison id=${id} type=${typeof id} profiles=${JSON.stringify(profiles)} findResult=${JSON.stringify(matchedProfile)}`,
         );
 
         if (!cancelled) {
-          setProfile(data);
+          setProfile(matchedProfile);
         }
       } catch (err) {
         if (!cancelled) {

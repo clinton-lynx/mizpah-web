@@ -27,10 +27,8 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: "Live Monitor", href: "/dashboard", icon: "videocam" },
-  { label: "Event Log", href: "/event-log", icon: "list_alt" },
   { label: "Watchlists", href: "/watchlists", icon: "search" },
-  { label: "System Health", href: "/system-health", icon: "monitor_heart" },
-  { label: "Analytics", href: "/analytics", icon: "query_stats", active: true },
+  { label: "Enroll", href: "/enroll", icon: "person_add" },
 ] as const;
 
 const statCards = [

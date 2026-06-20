@@ -15,16 +15,8 @@ const navGroups = [
     label: "Operations",
     items: [
       { label: "Live Monitor", href: "/dashboard", id: "dashboard", icon: "videocam" },
-      { label: "Event Log", href: "/event-log", id: "event-log", icon: "list_alt", badge: "3" },
       { label: "Watchlists", href: "/watchlists", id: "watchlists", icon: "search" },
       { label: "Enroll", href: "/enroll", id: "enroll", icon: "person_add" },
-    ],
-  },
-  {
-    label: "Management",
-    items: [
-      { label: "System Health", href: "/system-health", id: "system-health", icon: "monitor_heart" },
-      { label: "Analytics", href: "/analytics", id: "analytics", icon: "query_stats" },
     ],
   },
 ] as const;
@@ -67,8 +59,8 @@ export default function Sidebar({ activeNav }: { activeNav: ActiveNav }) {
                     <MaterialIcon name={item.icon} className="text-[20px]" />
                     <span className="text-[14px] font-semibold">{item.label}</span>
                     {"badge" in item && item.badge ? (
-                      <span className="ml-auto rounded-full bg-error px-2 py-0.5 font-label-mono text-[11px] leading-none text-on-error">
-                        {item.badge}
+                    <span className="ml-auto rounded-full bg-error px-2 py-0.5 font-label-mono text-[11px] leading-none text-on-error">
+                        {String(item.badge)}
                       </span>
                     ) : null}
                   </Link>
