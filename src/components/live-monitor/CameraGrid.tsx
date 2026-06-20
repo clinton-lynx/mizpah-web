@@ -2,7 +2,7 @@
 
 import LiveCameraCard from "@/components/live-monitor/LiveCameraCard";
 import CameraCard from "@/components/live-monitor/CameraCard";
-import type { LiveAlert } from "@/components/live-monitor/types";
+import type { LiveMatchPayload } from "@/components/live-monitor/types";
 
 const cameras = [
   {
@@ -28,7 +28,7 @@ const cameras = [
 export default function CameraGrid({
   onMatch,
 }: {
-  onMatch: (alert: LiveAlert) => void;
+  onMatch: (match: LiveMatchPayload) => void;
 }) {
   return (
     <section className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-2" id="active-feeds">

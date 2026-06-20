@@ -60,12 +60,20 @@ export default function LiveMonitorPage() {
     return [location, confidenceLabel ? `${confidenceLabel} conf.` : null].filter(Boolean).join(" · ");
   }
 
+  function createAlertId() {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
   function handleMatch(match: LiveMatchPayload) {
     const report = pickAlertType(match);
     const type: LiveAlertType = report?.report_type ?? "medical";
 
     const alert: LiveAlert = {
-      id: crypto.randomUUID(),
+      id: createAlertId(),
       name: match.profileName,
       type,
       location: match.location,
