@@ -68,3 +68,8 @@ export async function getProfiles() {
   const data = await response.json();
   return data.profiles;
 }
+
+export async function getProfileById(id: string) {
+  const profiles = await getProfiles();
+  return profiles.find((p: any) => p.id === id) || null;
+}
