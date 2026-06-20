@@ -1,14 +1,7 @@
+import LiveCameraCard from "@/components/live-monitor/LiveCameraCard";
 import CameraCard from "@/components/live-monitor/CameraCard";
 
 const cameras = [
-  {
-    name: "Gate A",
-    code: "CAM-01",
-    status: "match" as const,
-    alertLabel: "Match",
-    alertDetails: "97% CONF",
-    recordLabel: "CAM-01 • REC",
-  },
   {
     name: "Exit B",
     code: "CAM-02",
@@ -32,6 +25,11 @@ const cameras = [
 export default function CameraGrid() {
   return (
     <section className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-2" id="active-feeds">
+      <LiveCameraCard
+        name="Gate A"
+        code="CAM-01"
+        recordLabel="CAM-01 • LIVE"
+      />
       {cameras.map((camera) => (
         <CameraCard key={camera.code} {...camera} />
       ))}
