@@ -9,6 +9,8 @@ import CaseListRow, { type CaseRow } from "@/components/watchlists/CaseListRow";
 import CaseSearchBar from "@/components/watchlists/CaseSearchBar";
 import { getProfiles } from "@/lib/api";
 
+type CaseFilter = "all" | "watchlist" | "missing" | "medical";
+
 type ProfileRecord = {
   id?: string | number;
   profile_id?: string | number;
@@ -24,15 +26,19 @@ type ProfileRecord = {
   threat_level?: string;
 };
 
+type ProfileRow = CaseRow & {
+  type: Exclude<CaseFilter, "all">;
+};
+
 function getProfileId(profile: ProfileRecord) {
-  return String(profile.id ?? profile.profile_id ?? profile.slug ?? profile.name ?? crypto.randomUUID());
+  return String(profile.id ?? profile.profile_id ?? profile.slug ?? profile.name ?? "profile");
 }
 
 function getProfileImage(profile: ProfileRecord) {
   return profile.image ?? profile.image_url ?? profile.photo_url ?? profile.photo ?? null;
 }
 
-function getProfileType(profile: ProfileRecord): CaseRow["category"] {
+function getProfileType(profile: ProfileRecord): ProfileRow["type"] {
   const type = (profile.type || "").toLowerCase();
   if (type === "missing" || type === "medical" || type === "watchlist") {
     return type;
@@ -59,9 +65,10 @@ function getMetaLine(profile: ProfileRecord) {
 }
 
 export default function WatchlistsPage() {
-  const [profiles, setProfiles] = useState<CaseRow[]>([]);
+  const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<CaseFilter>("all");
 
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +90,7 @@ export default function WatchlistsPage() {
             imageSrc: getProfileImage(profile),
             category: getProfileType(profile),
             metaLine: getMetaLine(profile),
+            type: getProfileType(profile),
           })),
         );
       } catch (err) {
@@ -103,6 +111,23 @@ export default function WatchlistsPage() {
     };
   }, []);
 
+  const counts = useMemo(() => {
+    return {
+      all: profiles.length,
+      watchlist: profiles.filter((profile) => profile.type === "watchlist").length,
+      missing: profiles.filter((profile) => profile.type === "missing").length,
+      medical: profiles.filter((profile) => profile.type === "medical").length,
+    };
+  }, [profiles]);
+
+  const filteredProfiles = useMemo(() => {
+    if (activeFilter === "all") {
+      return profiles;
+    }
+
+    return profiles.filter((profile) => profile.type === activeFilter);
+  }, [activeFilter, profiles]);
+
   const content = useMemo(() => {
     if (loading) {
       return (
@@ -121,7 +146,7 @@ export default function WatchlistsPage() {
       );
     }
 
-    if (!profiles.length) {
+    if (!filteredProfiles.length) {
       return (
         <div className="rounded-lg border border-outline-variant/60 bg-surface-container-low px-4 py-5 text-sm text-on-surface-variant">
           No profiles found.
@@ -129,8 +154,8 @@ export default function WatchlistsPage() {
       );
     }
 
-    return profiles.map((row) => <CaseListRow key={row.id} row={row} />);
-  }, [errorMessage, loading, profiles]);
+    return filteredProfiles.map((row) => <CaseListRow key={row.id} row={row} />);
+  }, [errorMessage, filteredProfiles, loading]);
 
   return (
     <OperationalShell activeNav="watchlists">
@@ -150,7 +175,11 @@ export default function WatchlistsPage() {
           </div>
 
           <div className="mt-5">
-            <CaseFilterTabs />
+            <CaseFilterTabs
+              activeFilter={activeFilter}
+              counts={counts}
+              onSelectFilter={setActiveFilter}
+            />
           </div>
 
           <div className="mt-5">
