@@ -71,6 +71,18 @@ function resolveMatchSummary(response: ScanResponse) {
   return confidence ? `${name} • ${confidence}` : name;
 }
 
+function getCropDimensions(
+  detection: NonNullable<Awaited<ReturnType<typeof detectFace>>>,
+) {
+  const maxWidth = 400;
+  const scale = Math.min(1, maxWidth / detection.box.width);
+
+  return {
+    width: Math.max(1, Math.round(detection.box.width * scale)),
+    height: Math.max(1, Math.round(detection.box.height * scale)),
+  };
+}
+
 export interface LiveCameraCardProps {
   name: string;
   code: string;
@@ -97,6 +109,7 @@ export default function LiveCameraCard({
   const [modelsReady, setModelsReady] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [matchSummary, setMatchSummary] = useState<string | null>(null);
+  const [cropPreviewSrc, setCropPreviewSrc] = useState<string | null>(null);
 
   function createAlertId() {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -229,6 +242,7 @@ export default function LiveCameraCard({
         }
 
         if (!detection) {
+          setCropPreviewSrc(null);
           clearFaceOverlay();
           setStatus("scanning");
           return;
@@ -236,9 +250,16 @@ export default function LiveCameraCard({
 
         const base64Face = cropFaceFromVideo(video, detection);
         if (!base64Face) {
+          setCropPreviewSrc(null);
           setStatus("scanning");
           return;
         }
+
+        const { width: cropWidth, height: cropHeight } = getCropDimensions(detection);
+        console.log(
+          `[LiveCameraCard] crop size for ${name}: ${cropWidth}x${cropHeight}`,
+        );
+        setCropPreviewSrc(`data:image/jpeg;base64,${base64Face}`);
 
         const response = (await scanFace(base64Face, "passive")) as ScanResponse;
 
@@ -275,6 +296,7 @@ export default function LiveCameraCard({
         setStatus("scanning");
         setMatchSummary(null);
       } catch (err) {
+        setCropPreviewSrc(null);
         clearFaceOverlay();
         if (!cancelled) {
           setStatus("error");
@@ -352,6 +374,20 @@ export default function LiveCameraCard({
         className="absolute inset-0 h-full w-full object-cover"
       />
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full pointer-events-none" />
+
+      {cropPreviewSrc ? (
+        <div className="absolute bottom-4 left-4 z-20 overflow-hidden rounded-2xl border border-outline-variant/70 bg-surface-container-lowest/85 shadow-[0_0_0_1px_rgba(0,0,0,0.18)]">
+          <div className="border-b border-outline-variant/60 px-2 py-1 font-label-mono text-[10px] uppercase tracking-[0.05em] text-on-surface-variant">
+            Capture preview
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={cropPreviewSrc}
+            alt={`${name} crop preview`}
+            className="h-24 w-24 object-cover"
+          />
+        </div>
+      ) : null}
 
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(57,71,102,0.35),transparent_34%),radial-gradient(circle_at_80%_0%,rgba(89,219,199,0.1),transparent_30%),linear-gradient(180deg,rgba(16,20,21,0.65),rgba(11,15,16,0.95))]" />
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:48px_48px] opacity-35" />
