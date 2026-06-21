@@ -3,12 +3,128 @@
 import { useState, type FormEvent } from "react";
 
 import OperationalShell from "@/components/shared/OperationalShell";
+import MaterialIcon from "@/components/shared/MaterialIcon";
 import CategorySelector, { type EnrollCategory } from "@/components/enroll/CategorySelector";
 import BiometricUpload from "@/components/enroll/BiometricUpload";
 import WatchlistDetailsForm from "@/components/enroll/WatchlistDetailsForm";
 import MedicalProfileForm from "@/components/enroll/MedicalProfileForm";
 import EnrollButton from "@/components/enroll/EnrollButton";
+import EnrollSuccessCard, { type EnrollSuccessField } from "@/components/enroll/EnrollSuccessCard";
 import { enrollProfile } from "@/lib/api";
+
+type EnrollResponseRecord = {
+  id?: string | number;
+  _id?: string | number;
+  uuid?: string | number;
+  name?: string | null;
+  type?: EnrollCategory;
+  image_url?: string | null;
+  image?: string | null;
+  photo_url?: string | null;
+  photo?: string | null;
+  blood_type?: string | null;
+  allergies?: string | null;
+  conditions?: string | null;
+  emergency_contact?: string | null;
+  threat_level?: string | null;
+  reason?: string | null;
+  added_by?: string | null;
+  flagged_by?: string | null;
+  last_seen_location?: string | null;
+  description?: string | null;
+  registered_by?: string | null;
+  guardian_contact?: string | null;
+};
+
+type EnrollSuccessState = {
+  imageUrl: string | null;
+  name: string;
+  profileType: string;
+  fields: EnrollSuccessField[];
+  id: string;
+};
+
+function getProfileTypeLabel(type?: EnrollCategory | string | null) {
+  if (type === "medical") return "Medical profile";
+  if (type === "watchlist") return "Watchlist";
+  if (type === "missing") return "Missing person";
+  return "Profile";
+}
+
+function getProfileImageUrl(record: EnrollResponseRecord) {
+  return record.image_url ?? record.image ?? record.photo_url ?? record.photo ?? null;
+}
+
+function getProfileId(record: EnrollResponseRecord) {
+  return String(record.id ?? record._id ?? record.uuid ?? "Unknown");
+}
+
+function getFieldValue(value?: string | null) {
+  return value?.trim() ? value.trim() : "Not provided";
+}
+
+function buildSuccessState(
+  response: unknown,
+  fallbackType: EnrollCategory,
+): EnrollSuccessState | null {
+  const record = Array.isArray((response as { data?: unknown })?.data)
+    ? ((response as { data?: EnrollResponseRecord[] }).data?.[0] ?? null)
+    : null;
+
+  if (!record) {
+    return null;
+  }
+
+  const type = record.type ?? fallbackType;
+  const profileType = getProfileTypeLabel(type);
+  const base = {
+    imageUrl: getProfileImageUrl(record),
+    name: record.name?.trim() || "Unknown profile",
+    profileType,
+    id: getProfileId(record),
+  };
+
+  if (type === "medical") {
+    return {
+      ...base,
+      fields: [
+        { label: "Blood Type", value: getFieldValue(record.blood_type) },
+        { label: "Allergies", value: getFieldValue(record.allergies) },
+        { label: "Conditions", value: getFieldValue(record.conditions) },
+        { label: "Emergency Contact", value: getFieldValue(record.emergency_contact) },
+      ],
+    };
+  }
+
+  if (type === "missing") {
+    return {
+      ...base,
+      fields: [
+        { label: "Last Seen Location", value: getFieldValue(record.last_seen_location) },
+        { label: "Description", value: getFieldValue(record.description) },
+        {
+          label: "Registered By",
+          value: getFieldValue(record.registered_by ?? record.guardian_contact),
+        },
+      ],
+    };
+  }
+
+  return {
+    ...base,
+    fields: [
+      { label: "Threat Level", value: getFieldValue(record.threat_level) },
+      {
+        label: "Reason",
+        value: getFieldValue(record.reason),
+      },
+      {
+        label: "Flagged By",
+        value: getFieldValue(record.added_by ?? record.flagged_by),
+      },
+    ],
+  };
+}
 
 export default function EnrollPage() {
   const [selectedCategory, setSelectedCategory] = useState<EnrollCategory>(null);
@@ -25,13 +141,11 @@ export default function EnrollPage() {
   const [medicalAllergies, setMedicalAllergies] = useState("");
   const [medicalConditions, setMedicalConditions] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [responseData, setResponseData] = useState<unknown>(null);
+  const [successState, setSuccessState] = useState<EnrollSuccessState | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const resetResultState = () => {
-    setSuccessMessage(null);
-    setResponseData(null);
+    setSuccessState(null);
     setErrorMessage(null);
   };
 
@@ -87,8 +201,7 @@ export default function EnrollPage() {
       }
 
       const response = await enrollProfile(payload);
-      setSuccessMessage("Enroll request submitted successfully.");
-      setResponseData(response);
+      setSuccessState(buildSuccessState(response, selectedCategory));
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : "Unknown enroll error");
     } finally {
@@ -217,12 +330,19 @@ export default function EnrollPage() {
                 />
               ) : null}
 
-              {successMessage ? (
-                <div className="rounded-lg border border-primary/30 bg-primary/10 p-4 text-sm text-on-surface">
-                  <div className="font-semibold text-primary">{successMessage}</div>
-                  <pre className="mt-3 overflow-x-auto whitespace-pre-wrap break-words rounded-md bg-surface-container-low p-3 font-mono text-[11px] text-on-surface-variant">
-                    {JSON.stringify(responseData, null, 2)}
-                  </pre>
+              {successState ? (
+                <div className="space-y-3">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
+                    <MaterialIcon name="check_circle" className="text-[18px]" />
+                    <span>Enrollment successful</span>
+                  </div>
+                  <EnrollSuccessCard
+                    imageUrl={successState.imageUrl}
+                    name={successState.name}
+                    profileType={successState.profileType}
+                    fields={successState.fields}
+                    id={successState.id}
+                  />
                 </div>
               ) : null}
 
